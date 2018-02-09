@@ -119,7 +119,22 @@ case 1. when promise instance disposed?
 				Promise1{ state: 0, resolve-result: , defer:[{}]}
 				
 				Saw the attached picture.(promise.png)
-				
+	
+case 4: Mutation Observer - MutationObserver
+	
+		https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
+		
+		Adding an observer to an element is just like addEventListener, if you observe the element multiple times it does not make a difference.
+		Meaning if you observe an element twice, the observe callback does not fire twice, nor will you have to run disconnect() twice. 
+		In other words, once an element is observed, observing it again with the same observer instance will do nothing. 
+		However if the callback object is different it will of course add another observer to it.
+		
+		The callback will be triggered asynchronously once there is no scripts execution in the page.
+		
+		ASAP queue leverage its power to implement the callback queue.
+		
+
+
 		
 				
 		
