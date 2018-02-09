@@ -1,0 +1,157 @@
+Reading source code - promise-7.0.4.js
+case 1. when promise instance disposed? 
+	<head>	 
+		<script src="Scripts/promise.js"></script>
+		<script type="text/javascript">
+			function testPromise() {
+			   new Promise(function (resolve, reject) {
+					setTimeout(function () {
+						resolve('barret');
+					}, 2000);
+				}).then(function () {
+					console.log(new Date().toLocaleDateString() + ': promise is done');
+				})
+			}
+		</script>
+	</head>
+	<body>
+		<button onclick="onClick()">Tap Me</button>
+	</body>
+
+	Question 1, after leave testPromise, why promise instance is not disposed until 'then' finished?
+	Answer, cause it's refer to the instance inner by 'this', 
+	Pseudocode: 
+	
+	function Promise(fn) {       
+	  doResolve(fn, this);
+	}
+	
+    function doResolve(fn, promise) {
+		var done = false;	
+		function A(value) { // A keep the promise instance into the scope chain (closure), so it's not gonna disposed until A & B is disposed both.
+			if (done) return;
+			done = true;
+			resolve(promise, value);
+		}
+		function B(reason) {
+			if (done) return;
+			done = true;
+			reject(promise, reason);
+		}
+        fn(A, B);       
+    }	
+ 
+ Case 2: Leverage without any then
+		It doesn't make any sense if we resolve it directly rather than resolve it after do some asynchronous operation.
+
+ Case 3: Leverage with only one then
+		then is an asynchronous function in the ASAP queue.
+		
+		scenario 1, resolve plain object
+			a. one THEN only
+			
+				new Promise(function (resolve, reject) {
+					setTimeout(function () {
+						resolve({});
+					}, 2000);
+				}).then(function () {
+					console.log(new Date().toLocaleDateString() + ': promise is done');
+				});
+				
+				Each then is another new promise instance innerly, the inner promise instance, resolve handler and reject handler consist of the deferred object of the outer promise.
+				Once promise is resolved, the then chain executes sequently. And the reject handler can only catch the prior THEN's error/rejection. Then chain will stops if one of 
+				it reject.
+				
+			b. multiple then
+				
+				new Promise(function (resolve, reject) {
+					setTimeout(function () {
+						resolve({});
+					}, 2000);
+				}).then(function () {
+					console.log(new Date().toLocaleDateString() + ': Level 1 promise is done');
+				}).then(function(){
+					console.log(new Date().toLocaleDateString() + ': Level 2 promise is done');
+				})...
+				
+			c. one promise with two different forked then chain
+				
+				var promise = new Promise(function (resolve, reject) {
+						setTimeout(function () {
+							resolve({});
+						}, 2000);
+					})
+					
+				promise.then(function () {
+					console.log(new Date().toLocaleDateString() + ': Forked 1 Level 1 promise is done');
+				}).then(function(){
+					console.log(new Date().toLocaleDateString() + ': Forked 1 Level 2 promise is done');
+				})...
+					
+				promise.then(function () {
+					console.log(new Date().toLocaleDateString() + ': Forked 2 Level 1 promise is done');
+				}).then(function(){
+					console.log(new Date().toLocaleDateString() + ': Forked 2 Level 2 promise is done');
+				})...
+					
+				The promise 'resolve' trigger these two forked THEH chain, they are separated. This means 'Forked 1' failed doesn't affect 'Forked 2' as long as there's no error/rejections.
+									
+				
+	    scenario 2, resolve another promise object
+		
+				var promise = new Promise(function (resolve, reject) {
+					setTimeout(function () {
+						resolve(new Promise(function(resolve, reject){
+							 setTimeout(function(){
+								resolve({});
+							 },6000);
+						}).then(function(result){
+								console.log('nested one');
+							});
+						);
+					}, 2000);
+				});
+					
+				promise.then(function (result) {
+					console.log(new Date().toLocaleDateString() + ': Forked 1 Level 1 promise is done');
+				})...
+
+				Promise1{ state: 0, resolve-result: , defer:[{}]}
+				
+				Saw the attached picture.(promise.png)
+				
+		
+				
+		
+				
+		
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+	
