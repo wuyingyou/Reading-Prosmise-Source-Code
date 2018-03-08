@@ -96,7 +96,7 @@
           if (self._37 === 1) {
             resolve(deferred.promise, self._12);
           } else {
-            reject(deferred.promise, self._12);
+            reject(deferred.promise, self._12); // there is no reject callback, pass the return value to the outer level and so on.
           }
           return;
         }

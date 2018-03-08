@@ -119,8 +119,58 @@ case 1. when promise instance disposed?
 				Promise1{ state: 0, resolve-result: , defer:[{}]}
 				
 				Saw the attached picture.(promise.png)
+				
+ Case 4: Reject
+
+		function onClick() {
+            testPromise().then(function () {
+                console.log(new Date().toLocaleDateString() + ': promise is done.');
+            }, function(err) {
+                console.log('reject promise is done.'); // but here we can catch the reject object.
+            });
+        }
+		
+        function testPromise() {
+           return new Promise(function (resolve, reject) {
+               setTimeout(function () {
+				   resolve(new Promise(function (resolve, reject) {
+					   setTimeout(function () {			
+							   reject(new Error("Inner Error")); //here we reject							   
+						   }, 3000);                                            
+					   }).then(function () {
+						   console.log('resolve nested promise.'); // we don't reject it manually
+					   }));
+               }, 2000);
+            });
+        } 
+		
+		onClick();
+		
+		Why we can catch the inner reject without reject it in the inner 'Then'? From the source code we can understand it.
+		
+		Wrap up, nested promise does not cause memory leak as long as the most inner promise resolve/reject.
+		
+		 asap(function() {
+			var cb = self._37 === 1 ? deferred.onFulfilled : deferred.onRejected;
+			if (cb === null) {
+			  if (self._37 === 1) {
+				resolve(deferred.promise, self._12);
+			  } else {
+				reject(deferred.promise, self._12); // no reject callback, then reject it to outer level. Here self._12 is the inner promise' return value - new Error('Inner Error')
+			  }
+			  return;
+			}
+			var ret = tryCallOne(cb, self._12);
+			if (ret === IS_ERROR) {
+			  reject(deferred.promise, LAST_ERROR);
+			} else {
+			  resolve(deferred.promise, ret);
+			}
+		  });
+		}
+				
 	
-case 4: Mutation Observer - MutationObserver
+case 5: Mutation Observer - MutationObserver
 	
 		https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver
 		
